@@ -12,6 +12,7 @@ import me.rainma22.dillydally.handler.FileHandler;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -32,13 +33,27 @@ public class Server {
         } catch (IOException ie) {
             // ignored
         }
-        try {
-            config = new JSONObject(Files.readString(configJson)).fromJson(ConfBean.class);
-        } catch (JSONException | IOException e) {
-            // ignored
+        boolean confExisted = Files.exists(configJson);
+        if (confExisted) {
+            try {
+                config = new JSONObject(Files.readString(configJson)).fromJson(ConfBean.class);
+            } catch (JSONException | IOException e) {
+                // ignored
+            }
         }
         Files.writeString(configJson, new JSONObject(config).toString(4));
-
+        if (!confExisted) {
+            System.out.println();
+            System.out.printf("Config file did not exist in %s. We generated a default. \n", configJson);
+            System.out.println("Please configure the file");
+            System.out.print("This program will exit in 3 seconds");
+            for (int i = 0; i < 3; i++) {
+                Thread.sleep(Duration.ofSeconds(1));
+                System.out.print(".");
+            }
+            System.out.println();
+            return;
+        }
         try {
             DillyDally dd = new DillyDally(config);
             HttpServer http = dd.createHttp();
@@ -46,10 +61,11 @@ public class Server {
             http.createContext("/", handler);
             http.start();
             LOGGER.always().log("Http Server Started at http://" + "0.0.0.0:" + config.getHttpPort());
-
-            HttpsServer https = dd.createHttps();
-            https.createContext("/", handler);
-            https.start();
+            if (config.isDoHttps()) {
+                HttpsServer https = dd.createHttps();
+                https.createContext("/", handler);
+                https.start();
+            }
             LOGGER.always().log("Https Server Started at https://" + "0.0.0.0:" + config.getHttpsPort());
         } catch (IOException ie) {
             LOGGER.error(ie);

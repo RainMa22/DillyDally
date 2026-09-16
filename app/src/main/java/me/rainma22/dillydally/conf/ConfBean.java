@@ -6,10 +6,13 @@ import java.util.List;
  *
  */
 public class ConfBean {
+    public  static  final String SELF_SIGN = "self-sign";
     private int httpPort = 80;
+    private boolean doHttps = true;
     private int httpsPort = 443;
-    private String serverUrl = "https://acme-staging-v02.api.letsencrypt.org/directory";
+    private String serverUrl = SELF_SIGN;
     private FileHandlerConfBean fileHandlerConf = new FileHandlerConfBean();
+
     public String getServerUrl() {
         return serverUrl;
     }
@@ -21,7 +24,8 @@ public class ConfBean {
     private SSLCertificateConfBean sslCertificateConf = new SSLCertificateConfBean();
 
     private List<String> domains = List.of(
-            "this.is.a.test.com");
+            "localhost",
+            "127.0.0.1");
 
     public int getHttpPort() {
         return httpPort;
@@ -38,7 +42,7 @@ public class ConfBean {
     public void setHttpsPort(int httpsPort) {
         this.httpsPort = httpsPort;
     }
-    
+
     public List<String> getDomains() {
         return domains;
     }
@@ -61,6 +65,15 @@ public class ConfBean {
 
     public void setFileHandlerConf(FileHandlerConfBean fileHandlerConf) {
         this.fileHandlerConf = fileHandlerConf;
+    }
+
+
+    public boolean isDoHttps() {
+        return doHttps;
+    }
+
+    public void setDoHttps(boolean doHttps) {
+        this.doHttps = doHttps;
     }
 
 }

@@ -43,7 +43,7 @@ public class CertificateGetterContext {
     }
 
     public CertificateGetterState getState() {
-        if (conf.getServerUrl().equalsIgnoreCase("self-sign"))
+        if (conf.getServerUrl().equalsIgnoreCase(ConfBean.SELF_SIGN))
             return new SelfSignState();
         if (resourceLocations == null)
             return new GetResourceLocationState();
