@@ -2,7 +2,9 @@ package me.rainma22.dillydally.conf;
 
 import org.apache.commons.lang3.RandomStringUtils;
 
-public class SSLCertificateConfBean {
+import me.rainma22.dillydally.abstracts.Bean;
+
+public class SSLCertificateConfBean extends Bean {
     private static final RandomStringUtils random = RandomStringUtils.secureStrong();
     private String type = "file";
     private String pathToWebRootDir = "res/static";

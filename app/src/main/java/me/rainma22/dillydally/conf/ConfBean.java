@@ -1,17 +1,26 @@
 package me.rainma22.dillydally.conf;
 
 import java.util.List;
+import java.util.Map;
+
+import org.json.JSONObject;
+import org.json.JSONPropertyIgnore;
+
+import com.sun.net.httpserver.HttpHandler;
+
+import me.rainma22.dillydally.abstracts.Bean;
 
 /**
  *
  */
-public class ConfBean {
-    public  static  final String SELF_SIGN = "self-sign";
+public class ConfBean extends Bean{
+    public static final String SELF_SIGN = "self-sign";
     private int httpPort = 80;
     private boolean doHttps = true;
     private int httpsPort = 443;
     private String serverUrl = SELF_SIGN;
-    private FileHandlerConfBean fileHandlerConf = new FileHandlerConfBean();
+    // private FileHandlerConfBean fileHandlerConf = new FileHandlerConfBean();
+    private Map<String, Object> layoutScheme = HandlerLayoutLoader.DEFAULT_LAYOUT;
 
     public String getServerUrl() {
         return serverUrl;
@@ -59,21 +68,25 @@ public class ConfBean {
         this.sslCertificateConf = sslCertificateConf;
     }
 
-    public FileHandlerConfBean getFileHandlerConf() {
-        return fileHandlerConf;
-    }
-
-    public void setFileHandlerConf(FileHandlerConfBean fileHandlerConf) {
-        this.fileHandlerConf = fileHandlerConf;
-    }
-
-
     public boolean isDoHttps() {
         return doHttps;
     }
 
     public void setDoHttps(boolean doHttps) {
         this.doHttps = doHttps;
+    }
+
+    public Map<String, Object> getLayoutScheme() {
+        return layoutScheme;
+    }
+
+    public void setLayoutScheme(Map<String, Object> layout) {
+        this.layoutScheme = layout;
+    }
+
+    @JSONPropertyIgnore 
+    public Map<String, HttpHandler> getHandlerLayout(){
+        return new HandlerLayoutLoader().fromJson(new JSONObject(layoutScheme));
     }
 
 }

@@ -57,16 +57,33 @@ public class Server {
         try {
             DillyDally dd = new DillyDally(config);
             HttpServer http = dd.createHttp();
-            HttpHandler handler = new FileHandler(Path.of(config.getFileHandlerConf().getDirectoryPath()));
-            http.createContext("/", handler);
-            http.start();
-            LOGGER.always().log("Http Server Started at http://" + "0.0.0.0:" + config.getHttpPort());
             if (config.isDoHttps()) {
+                HttpHandler handler = new FileHandler(Path.of(config.getSslCertificateConf().getPathToWebRootDir()));
+                http.createContext("/", handler);
+                http.start();
                 HttpsServer https = dd.createHttps();
-                https.createContext("/", handler);
+                http.stop(0);
+
+                http = dd.createHttp();
+                for (var e : config.getHandlerLayout().entrySet()) {
+                    var k = e.getKey();
+                    var v = e.getValue();
+                    http.createContext(k, v);
+                    https.createContext(k, v);
+                }
+                http.start();
                 https.start();
+                LOGGER.always().log("Http Server Started at http://" + "0.0.0.0:" + config.getHttpPort());
+                LOGGER.always().log("Https Server Started at https://" + "0.0.0.0:" + config.getHttpsPort());
+            } else {
+                for (var e : config.getHandlerLayout().entrySet()) {
+                    var k = e.getKey();
+                    var v = e.getValue();
+                    http.createContext(k, v);
+                }
+                http.start();
+                LOGGER.always().log("Http Server Started at http://" + "0.0.0.0:" + config.getHttpPort());
             }
-            LOGGER.always().log("Https Server Started at https://" + "0.0.0.0:" + config.getHttpsPort());
         } catch (IOException ie) {
             LOGGER.error(ie);
             return;

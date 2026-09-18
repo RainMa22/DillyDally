@@ -2,6 +2,7 @@ package me.rainma22.dillydally.handler;
 
 import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Path;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
@@ -18,8 +19,11 @@ public class PathRedirectHandler implements HttpHandler {
     @Override
     public void handle(HttpExchange exch) throws IOException {
         try {
+            Path parent = Path.of(exch.getHttpContext().getPath());
+            Path child = Path.of(exch.getRequestURI().getPath());
+            Path rel = parent.relativize(child);
             exch.getResponseHeaders().add("Location",
-                    appendPath ? new URL(redirectTo, exch.getRequestURI().getPath()).toString()
+                    appendPath ? new URL(redirectTo, rel.toString()).toString()
                             : redirectTo.toString());
             exch.sendResponseHeaders(307, -1);
         } catch (Exception e) {
