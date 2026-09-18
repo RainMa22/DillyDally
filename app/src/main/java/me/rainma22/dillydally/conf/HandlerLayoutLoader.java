@@ -4,7 +4,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.json.JSONObject;
 
 import com.sun.net.httpserver.HttpHandler;
