@@ -56,8 +56,8 @@ DillyDally is a lightweight HTTP/HTTPS server with a pluggable handler system. Y
 | `pathToSSLCertPEM` | `string` | `"config/cert.pem"` | Path to save/lod TLS certificate PEM |
 | `nPollingRetries` | `int` | `10` | ACME order polling retries |
 | `renewalThresholdInDays` | `int` | `5` | Renew cert when fewer than N days remain |
-| `acmePassword` | `string` | *(randomly generated on first run)* | ACME account password to encrypt/decrypt the PEM file |
-| `sslKeyPassword` | `string` | *(randomly generated on first run)* | SSL key password to encrypt/decrypt the PEM file |
+| `acmePassword` | `string` | *(randomly generated if not defined)* | ACME account password to encrypt/decrypt the PEM file |
+| `sslKeyPassword` | `string` | *(randomly generated if not defined)* | SSL key password to encrypt/decrypt the PEM file |
 
 
 ### Handler Assignment Model
