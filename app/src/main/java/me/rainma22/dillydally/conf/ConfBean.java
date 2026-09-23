@@ -13,14 +13,15 @@ import me.rainma22.dillydally.abstracts.Bean;
 /**
  *
  */
-public class ConfBean extends Bean{
+public class ConfBean extends Bean {
     public static final String SELF_SIGN = "self-sign";
     private int httpPort = 80;
     private boolean doHttps = true;
     private int httpsPort = 443;
     private String serverUrl = SELF_SIGN;
-    // private FileHandlerConfBean fileHandlerConf = new FileHandlerConfBean();
     private Map<String, Object> layoutScheme = HandlerLayoutLoader.DEFAULT_LAYOUT;
+    private List<String> extensionJars = List.of();
+    private ExtensionLoader _extensionLoader = null;
 
     public String getServerUrl() {
         return serverUrl;
@@ -84,9 +85,29 @@ public class ConfBean extends Bean{
         this.layoutScheme = layout;
     }
 
-    @JSONPropertyIgnore 
-    public Map<String, HttpHandler> getHandlerLayout(){
+    @JSONPropertyIgnore
+    public Map<String, HttpHandler> getHandlerLayout() {
         return new HandlerLayoutLoader().fromJson(new JSONObject(layoutScheme));
     }
 
+    public static String getSelfSign() {
+        return SELF_SIGN;
+    }
+
+    public List<String> getExtensionJars() {
+        return extensionJars;
+    }
+
+    public void setExtensionJars(List<String> extensionJars) {
+        this.extensionJars = extensionJars;
+        _extensionLoader = null;
+    }
+
+    @JSONPropertyIgnore
+    public ExtensionLoader getExtensionLoader() {
+        if(_extensionLoader == null){
+            _extensionLoader = new ExtensionLoader(extensionJars);
+        }
+        return _extensionLoader;
+    }
 }
