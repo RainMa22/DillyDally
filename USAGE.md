@@ -30,8 +30,37 @@ DillyDally is a lightweight HTTP/HTTPS server with a pluggable handler system. Y
 3. Run again — the server reads the config and starts.
 
 ---
+## Configuration Reference
 
-## Handler Assignment Model
+
+### Top-level `config.json`
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `httpPort` | `int` | `80` | HTTP listen port |
+| `httpsPort` | `int` | `443` | HTTPS listen port |
+| `doHttps` | `boolean` | `true` | Enable HTTPS (requires certificate config) |
+| `serverUrl` | `string` | `"self-sign"` | `"self-sign"` or an ACME directory URL |
+| `domains` | `string[]` | `["localhost","127.0.0.1"]` | Domains for the TLS certificate |
+| `layoutScheme` | `object` | `{"/": {"FileHandler": {...}}}` | Path-to-handler mapping (see [Handler Assignment Model](#handler-assignment-model)) |
+| `sslCertificateConf` | `object` | *(see [SSL Certificate Config](#ssl-certificate-config))* | Certificate and ACME settings |
+
+### SSL Certificate Config
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `type` | `string` | `"file"` | `"file"` denotes a filed-based certification management strategy |
+| `pathToWebRootDir` | `string` | `"res/static"` | if `type` is `file`, Web root for ACME HTTP-01 challenges, . |
+| `pathToACMEPEM` | `string` | `"config/acme.pem"` | Path to save/load ACME account key PEM |
+| `pathToSSLKeyPEM` | `string` | `"config/key.pem"` | Path to save/load TLS private key PEM |
+| `pathToSSLCertPEM` | `string` | `"config/cert.pem"` | Path to save/lod TLS certificate PEM |
+| `nPollingRetries` | `int` | `10` | ACME order polling retries |
+| `renewalThresholdInDays` | `int` | `5` | Renew cert when fewer than N days remain |
+| `acmePassword` | `string` | *(randomly generated on first run)* | ACME account password to encrypt/decrypt the PEM file |
+| `sslKeyPassword` | `string` | *(randomly generated on first run)* | SSL key password to encrypt/decrypt the PEM file |
+
+
+### Handler Assignment Model
 
 The core concept is a **path-to-handler mapping** called the *handler layout*:
 
@@ -56,53 +85,23 @@ The layout is expressed as a JSON object where:
 
 When a request arrives, DillyDally matches the request URI against the registered context paths and dispatches to the assigned `HttpHandler`.
 
-### How assignment works internally
+<!-- ### How assignment works internally
 
 1. `Server.main()` reads `config.json` and deserializes it into a `ConfBean`.
 2. `ConfBean.getHandlerLayout()` delegates to `HandlerLayoutLoader.fromJson()`.
 3. `HandlerLayoutLoader` iterates the JSON keys, looks up each handler name in the `HandlerRegisty`, calls its constructor function with the kwargs map, and builds a `Map<String, HttpHandler>`.
-4. The server creates an HTTP context for each entry: `http.createContext(path, handler)`.
+4. The server creates an HTTP context for each entry: `http.createContext(path, handler)`. -->
 
 ---
 
-## Configuration Reference
+### Available Handlers
 
-### Top-level `config.json`
-
-| Field | Type | Default | Description |
-|-------|------|---------|-------------|
-| `httpPort` | `int` | `80` | HTTP listen port |
-| `httpsPort` | `int` | `443` | HTTPS listen port |
-| `doHttps` | `boolean` | `true` | Enable HTTPS (requires certificate config) |
-| `serverUrl` | `string` | `"self-sign"` | `"self-sign"` or an ACME directory URL |
-| `domains` | `string[]` | `["localhost","127.0.0.1"]` | Domains for the TLS certificate |
-| `layoutScheme` | `object` | `{"/": {"FileHandler": {...}}}` | Path-to-handler mapping (see below) |
-| `sslCertificateConf` | `object` | *(see SSLCertificateConfBean)* | Certificate and ACME settings |
-
-### SSL Certificate Config (`sslCertificateConf`)
-
-| Field | Type | Default | Description |
-|-------|------|---------|-------------|
-| `type` | `string` | `"file"` | `"file"` or `"acme"` |
-| `pathToWebRootDir` | `string` | `"res/static"` | Web root for ACME HTTP-01 challenges |
-| `pathToACMEPEM` | `string` | `"config/acme.pem"` | Path to ACME account key PEM |
-| `pathToSSLKeyPEM` | `string` | `"config/key.pem"` | Path to TLS private key PEM |
-| `pathToSSLCertPEM` | `string` | `"config/cert.pem"` | Path to TLS certificate PEM |
-| `nPollingRetries` | `int` | `10` | ACME order polling retries |
-| `renewalThresholdInDays` | `int` | `5` | Renew cert when fewer than N days remain |
-| `acmePassword` | `string` | *(random)* | ACME account password |
-| `sslKeyPassword` | `string` | *(random)* | SSL key password |
-
----
-
-## Built-in Handlers
-
-### FileHandler
+#### FileHandler
 
 Serves static files from a directory.
 
-**Handler name:** `FileHandler`  
-**Constructor kwarg:**
+**name:** `FileHandler`  
+**kwarg:**
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
@@ -123,12 +122,12 @@ Serves static files from a directory.
 
 ---
 
-### PathRedirect
+#### PathRedirect
 
 Issues a `307 Temporary Redirect` to a target URL.
 
-**Handler name:** `PathRedirect`  
-**Constructor kwargs:**
+**name:** `PathRedirect`  
+**kwargs:**
 
 | Key | Type | Description |
 |-----|------|-------------|
@@ -157,17 +156,17 @@ Issues a `307 Temporary Redirect` to a target URL.
 
 ---
 
-### ProtocolRedirect
+#### ProtocolRedirect
 
 Issues a `307 Temporary Redirect` that changes the URL scheme (e.g., HTTP → HTTPS).
 
-**Handler name:** `ProtocolRedirect`  
-**Constructor kwargs:**
+**name:** `ProtocolRedirect`  
+**kwargs:**
 
 | Key | Type | Description |
 |-----|------|-------------|
 | `protocol` | `string` | Target scheme: `"https"`, `"http"`, etc. |
-| `port` | `int` *(optional)* | Override the destination port (defaults to the incoming `Host` header port) |
+| `port` | `int` *(optional)* | Override the destination port (defaults to the default port for the given protocol) |
 
 **Example — force HTTPS:**
 ```json

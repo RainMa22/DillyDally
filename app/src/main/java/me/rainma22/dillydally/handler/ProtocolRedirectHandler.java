@@ -26,7 +26,7 @@ public class ProtocolRedirectHandler implements HttpHandler {
             var uriOut = new URI(protocol,
                     null,
                     hostUrl.getHost(),
-                    port == null ? hostUrl.getPort() : port,
+                    port == null? -1 : port,
                     exch.getRequestURI().getPath(),
                     null, null);
             System.out.println(uriOut);
