@@ -187,59 +187,7 @@ Issues a `307 Temporary Redirect` that changes the URL scheme (e.g., HTTP → HT
 
 ## Registering Custom Handlers
 
-To add your own handler, implement `com.sun.net.httpserver.HttpHandler` and register it with the `HandlerRegisty` before the server starts.
-
-### Step-by-step
-
-1. **Implement the handler:**
-
-   ```java
-   package me.rainma22.dillydally.handler;
-
-   import com.sun.net.httpserver.HttpExchange;
-   import com.sun.net.httpserver.HttpHandler;
-   import java.io.IOException;
-
-   public class ReverseProxyHandler implements HttpHandler {
-       private final String upstream;
-
-       public ReverseProxyHandler(String upstream) {
-           this.upstream = upstream;
-       }
-
-       @Override
-       public void handle(HttpExchange exch) throws IOException {
-           // proxy logic here
-       }
-   }
-   ```
-
-2. **Register it in `HandlerRegisty`:**
-
-   ```java
-   import me.rainma22.dillydally.handler.HandlerRegisty;
-   import java.net.URI;
-
-   var registry = new HandlerRegisty();
-   registry.register(ReverseProxyHandler.class, (map) ->
-       new ReverseProxyHandler(String.valueOf(map.get("upstream"))));
-   ```
-
-   The registry key is `clazz.getCanonicalName()` — use this string in your `layoutScheme` JSON.
-
-3. **Use it in `config.json`:**
-
-   ```json
-   {
-     "/api": {
-       "me.rainma22.dillydally.handler.ReverseProxyHandler": {
-         "upstream": "http://localhost:3000"
-       }
-     }
-   }
-   ```
-
-> **Note:** The `HandlerLayoutLoader` is constructed with a default `HandlerRegisty` when called via `ConfBean.getHandlerLayout()`. To inject a custom registry with your handlers, instantiate `HandlerLayoutLoader` with your registry and call `fromJson()` directly, or modify the `ConfBean` construction path to accept a pre-configured registry.
+> To be implemented
 
 ---
 
