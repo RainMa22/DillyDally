@@ -7,14 +7,15 @@ DillyDally is a lightweight HTTP/HTTPS server with a pluggable handler system. Y
 ## Table of Contents
 
 1. [Quick Start](#quick-start)
-2. [Handler Assignment Model](#handler-assignment-model)
-3. [Configuration Reference](#configuration-reference)
+2. [Configuration Reference](#configuration-reference)
+3. [Handler Assignment Model](#handler-assignment-model)
 4. [Built-in Handlers](#built-in-handlers)
    - [FileHandler](#filehandler)
    - [PathRedirect](#pathredirect)
    - [ProtocolRedirect](#protocolredirect)
 5. [Registering Custom Handlers](#registering-custom-handlers)
 6. [Full Configuration Example](#full-configuration-example)
+7. [Notes/GOTCHAs](#notes--gotchas)
 
 ---
 
@@ -50,10 +51,10 @@ DillyDally is a lightweight HTTP/HTTPS server with a pluggable handler system. Y
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
 | `type` | `string` | `"file"` | `"file"` denotes a filed-based certification management strategy |
-| `pathToWebRootDir` | `string` | `"res/static"` | if `type` is `file`, Web root for ACME HTTP-01 challenges, . |
+| `pathToWebRootDir` | `string` | `"res/static"` | if `type` is `file`, Web root for ACME HTTP-01 challenges. |
 | `pathToACMEPEM` | `string` | `"config/acme.pem"` | Path to save/load ACME account key PEM |
 | `pathToSSLKeyPEM` | `string` | `"config/key.pem"` | Path to save/load TLS private key PEM |
-| `pathToSSLCertPEM` | `string` | `"config/cert.pem"` | Path to save/lod TLS certificate PEM |
+| `pathToSSLCertPEM` | `string` | `"config/cert.pem"` | Path to save/load TLS certificate PEM |
 | `nPollingRetries` | `int` | `10` | ACME order polling retries |
 | `renewalThresholdInDays` | `int` | `5` | Renew cert when fewer than N days remain |
 | `acmePassword` | `string` | *(randomly generated if not defined)* | ACME account password to encrypt/decrypt the PEM file |
@@ -100,7 +101,7 @@ When a request arrives, DillyDally matches the request URI against the registere
 
 Serves static files from a directory.
 
-**name:** `FileHandler`  
+**handler name:** `FileHandler`  
 **kwarg:**
 
 | Key | Type | Default | Description |
@@ -126,7 +127,7 @@ Serves static files from a directory.
 
 Issues a `307 Temporary Redirect` to a target URL.
 
-**name:** `PathRedirect`  
+**handler name:** `PathRedirect`  
 **kwargs:**
 
 | Key | Type | Description |
@@ -160,7 +161,7 @@ Issues a `307 Temporary Redirect` to a target URL.
 
 Issues a `307 Temporary Redirect` that changes the URL scheme (e.g., HTTP → HTTPS).
 
-**name:** `ProtocolRedirect`  
+**handler name:** `ProtocolRedirect`  
 **kwargs:**
 
 | Key | Type | Description |
@@ -186,7 +187,77 @@ Issues a `307 Temporary Redirect` that changes the URL scheme (e.g., HTTP → HT
 
 ## Registering Custom Handlers
 
-> To be implemented
+Registering a Custom Handler involves creating a project that imports the current `DillyDally.jar` as a provided library using either IntelliJ (Easier)
+
+or with Gradle Configuration:
+```groovy
+dependencies {
+  // ...
+  compileonly <path_to_DillyDally_jar>
+  // ...
+}
+```
+
+or with Maven Configuration:
+
+```xml
+<!-- ... -->
+<dependency>
+    <groupId>me.rainma22</groupId>
+    <artifactId>dillydally</artifactId>
+    <version>1.0</version>
+    <scope>provided</scope>
+    <systemPath>{path_to_DillyDally_jar}</systemPath>
+</dependency>
+<!-- ... -->
+```
+
+You will need to implement `me.rainma22.abstracts.DillyDallyExtension` which puts your handler logic into the `HandlerRegistry`
+```Java
+// ...
+import me.rainma22.abstracts.DillyDallyExtension;
+public class myExtension implements DillyDallyExtension{
+  public void onLoad(HandlerRegistry hr){
+    hr.register(MyHandler.class, (kwargs) -> {
+      // STUB: kwargs handing logic here;
+      return new MyHandler(...);
+    } );
+
+    // replace my Handler.class and relevant constructor logic
+  }
+}
+```
+You will need to package your extension into a Jar file
+
+> (For Beginner: We recommend packing your extensions in a fat Jar such that you won't need to worry about the dependencies jars in the next step). 
+
+Then, in `config/config.json`
+```json
+{
+  // ...
+  "extensionNameSpaces": {
+    "{namespace}": [
+      {path_to_your_jarfile},
+      {additional_dependencies}
+    ]},
+  // ...
+  "enabledExtensions": ["{namespace}_{canonical_name_of_your_extension}"],
+  // ...
+  "layoutScheme": {
+    "/": {
+      "{canonical_name_of_your_handler}": {
+        // kwargs of your handler
+      }
+    }
+  }
+  // ...
+}
+```
+
+Once the configuration is complete, you should be able to see your handler at work for `/*`.
+
+> Namespaces can be any string of your choice a different URLClassLoader are given for different namespaces, if you have extensions with conflicting dependencies, use a different namespace.
+> - if the extension entered into `enabledExtensions` does not have a `{namespace}_` prefix, the `default` namespace will be used. 
 
 ---
 
@@ -199,6 +270,8 @@ Issues a `307 Temporary Redirect` that changes the URL scheme (e.g., HTTP → HT
   "doHttps": true,
   "serverUrl": "self-sign",
   "domains": ["localhost", "127.0.0.1"],
+  "extensionNamespaces": {"default": []},
+  "enabledExtensions": [],
   "layoutScheme": {
     "/": {
       "FileHandler": {
@@ -231,9 +304,10 @@ Issues a `307 Temporary Redirect` that changes the URL scheme (e.g., HTTP → HT
 
 ---
 
-## Notes
+## Notes / GOTCHAs
 
 - Path matching follows `com.sun.net.httpserver.HttpServer.createContext()` semantics — a context path `"/api"` matches `/api`, `/api/`, `/api/foo`, etc.
 - Each path key in `layoutScheme` maps to **exactly one** handler (the JSON enforces a single-key object).
 - The `layoutScheme` default serves the current working directory at `/` via `FileHandler`.
 - All handlers run on a virtual-thread-per-task executor (`Executors.newVirtualThreadPerTaskExecutor()`).
+- built-in handlers are referenced by their keyword("handler name") and not their canonical names.

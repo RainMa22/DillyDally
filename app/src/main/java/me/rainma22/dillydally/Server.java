@@ -57,6 +57,7 @@ public class Server {
         try {
             DillyDally dd = new DillyDally(config);
             HttpServer http = dd.createHttp();
+            var handlerLayout = config.getHandlerLayout();
             if (config.isDoHttps()) {
                 HttpHandler handler = new FileHandler(Path.of(config.getSslCertificateConf().getPathToWebRootDir()));
                 http.createContext("/", handler);
@@ -65,7 +66,7 @@ public class Server {
                 http.stop(0);
 
                 http = dd.createHttp();
-                for (var e : config.getHandlerLayout().entrySet()) {
+                for (var e : handlerLayout.entrySet()) {
                     var k = e.getKey();
                     var v = e.getValue();
                     http.createContext(k, v);
@@ -76,7 +77,7 @@ public class Server {
                 LOGGER.always().log("Http Server Started at http://" + "0.0.0.0:" + config.getHttpPort());
                 LOGGER.always().log("Https Server Started at https://" + "0.0.0.0:" + config.getHttpsPort());
             } else {
-                for (var e : config.getHandlerLayout().entrySet()) {
+                for (var e : handlerLayout.entrySet()) {
                     var k = e.getKey();
                     var v = e.getValue();
                     http.createContext(k, v);
