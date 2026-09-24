@@ -27,6 +27,10 @@ public class ExtensionLoader implements AutoCloseable {
     public ExtensionLoader(Map<String, List<String>> pathToJars) {
         pathToJars.forEach((k, v) -> {
             var cl = new URLClassLoader(v.stream().map(s -> Path.of(s))
+                    .peek(p -> {
+                        if (!Files.exists(p))
+                            LOGGER.warn("path " + p.toString() + " does not exists, skipping...");
+                    })
                     .filter(p -> Files.exists(p))
                     .map(p -> {
                         try {
@@ -35,11 +39,11 @@ public class ExtensionLoader implements AutoCloseable {
                             throw new RuntimeException(e);
                         }
                     })
-                    .toArray(URL[]::new));
+                    .toArray(URL[]::new), getClass().getClassLoader());
             classLoaderMap.put(k, cl);
         });
         if (!classLoaderMap.containsKey("default")) {
-            classLoaderMap.put("default", new URLClassLoader(new URL[] {}));
+            classLoaderMap.put("default", new URLClassLoader(new URL[] {}, getClass().getClassLoader()));
         }
     }
 
