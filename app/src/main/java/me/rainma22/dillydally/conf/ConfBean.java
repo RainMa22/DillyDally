@@ -12,6 +12,7 @@ import com.sun.net.httpserver.HttpHandler;
 
 import me.rainma22.dillydally.abstracts.Bean;
 import me.rainma22.dillydally.exceptions.InvalidExtensionException;
+import me.rainma22.dillydally.exceptions.InvalidLayoutException;
 import me.rainma22.dillydally.exceptions.InvalidNamespaceException;
 import me.rainma22.dillydally.handler.HandlerRegisty;
 
@@ -93,7 +94,7 @@ public class ConfBean extends Bean {
     }
 
     @JSONPropertyIgnore
-    public Map<String, HttpHandler> getHandlerLayout() {
+    public Map<String, HttpHandler> getHandlerLayout() throws InvalidLayoutException {
         HandlerRegisty registy = new HandlerRegisty();
         var extensionLoader = getExtensionLoader();
         int nLoaded = 0;

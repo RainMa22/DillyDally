@@ -8,6 +8,7 @@ import org.json.JSONObject;
 
 import com.sun.net.httpserver.HttpHandler;
 
+import me.rainma22.dillydally.exceptions.InvalidLayoutException;
 import me.rainma22.dillydally.handler.HandlerRegisty;
 
 public final class HandlerLayoutLoader {
@@ -24,11 +25,14 @@ public final class HandlerLayoutLoader {
     public static final Map<String, Object> DEFAULT_LAYOUT = Map.of(
             "/", Map.of("FileHandler", new FileHandlerConfBean().toMap()));
 
-    public Map<String, HttpHandler> fromJson(JSONObject json) {
+    public Map<String, HttpHandler> fromJson(JSONObject json) throws InvalidLayoutException {
         var outMap = new HashMap<String, HttpHandler>();
         for (String k : json.keySet()) {
             JSONObject handlerCall = json.getJSONObject(k);
-            assert handlerCall.keySet().size() == 1;
+            if (handlerCall.keySet().size() != 1)
+                throw new InvalidLayoutException(
+                        "You cannot have more than 1 handler for any endpoint, " +
+                                "including '" + k + "'!");
             for (String handlerName : handlerCall.keySet()) {
                 HttpHandler handler = registy.getConstructorOf(handlerName)
                         .orElseThrow()
