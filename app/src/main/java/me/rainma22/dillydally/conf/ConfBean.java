@@ -12,6 +12,7 @@ import com.sun.net.httpserver.HttpHandler;
 
 import me.rainma22.dillydally.abstracts.Bean;
 import me.rainma22.dillydally.exceptions.InvalidExtensionException;
+import me.rainma22.dillydally.exceptions.InvalidNamespaceException;
 import me.rainma22.dillydally.handler.HandlerRegisty;
 
 /**
@@ -25,8 +26,9 @@ public class ConfBean extends Bean {
     private int httpsPort = 443;
     private String serverUrl = SELF_SIGN;
     private Map<String, Object> layoutScheme = HandlerLayoutLoader.DEFAULT_LAYOUT;
-    private Map<String, List<String>> extensionNameSpaces = Map.of("default", List.of());
+    private Map<String, List<String>> extensionNamespaces = Map.of("default", List.of());
     private List<String> enabledExtensions = List.of();
+    private ExtensionLoader _extensionLoader = null;
 
     public String getServerUrl() {
         return serverUrl;
@@ -94,13 +96,16 @@ public class ConfBean extends Bean {
     public Map<String, HttpHandler> getHandlerLayout() {
         HandlerRegisty registy = new HandlerRegisty();
         var extensionLoader = getExtensionLoader();
+        int nLoaded = 0;
         for (String extensionName : enabledExtensions) {
             try {
                 extensionLoader.load(extensionName, registy);
-            } catch (ClassNotFoundException | InvalidExtensionException e) {
+                nLoaded++;
+            } catch (ClassNotFoundException | InvalidExtensionException | InvalidNamespaceException e) {
                 LOGGER.error("Error when loading " + extensionName + ": ", e);
             }
         }
+        LOGGER.info("Loaded {} out of {} requested extensions.", nLoaded, enabledExtensions.size());
         return new HandlerLayoutLoader(registy).fromJson(new JSONObject(layoutScheme));
     }
 
@@ -108,17 +113,28 @@ public class ConfBean extends Bean {
         return SELF_SIGN;
     }
 
-    public Map<String, List<String>> getExtensionNameSpaces() {
-        return extensionNameSpaces;
+    public Map<String, List<String>> getExtensionNamespaces() {
+        return extensionNamespaces;
     }
 
-    public void setExtensionNameSpaces(Map<String, List<String>> extensions) {
-        this.extensionNameSpaces = extensions;
+    public void setExtensionNamespaces(Map<String, List<String>> extensions) {
+        this.extensionNamespaces = extensions;
+        if (_extensionLoader != null) {
+            try {
+                _extensionLoader.close();
+            } catch (Exception e) {
+                LOGGER.error("Error when freeing extensionLoader", e);
+            }
+        }
+        _extensionLoader = null;
     }
 
     @JSONPropertyIgnore
     private ExtensionLoader getExtensionLoader() {
-        return new ExtensionLoader(extensionNameSpaces);
+        if (_extensionLoader == null) {
+            _extensionLoader = new ExtensionLoader(extensionNamespaces);
+        }
+        return _extensionLoader;
     }
 
     public List<String> getEnabledExtensions() {

@@ -1,5 +1,6 @@
 package me.rainma22.dillydally.conf;
 
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -11,13 +12,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import com.sun.jdi.ClassNotPreparedException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import me.rainma22.dillydally.abstracts.DillyDallyExtension;
 import me.rainma22.dillydally.exceptions.InvalidExtensionException;
+import me.rainma22.dillydally.exceptions.InvalidNamespaceException;
 import me.rainma22.dillydally.handler.HandlerRegisty;
 
-public class ExtensionLoader {
+public class ExtensionLoader implements AutoCloseable {
+    private Logger LOGGER = LogManager.getLogger();
     private Map<String, URLClassLoader> classLoaderMap = new HashMap<>(2);
 
     public ExtensionLoader(Map<String, List<String>> pathToJars) {
@@ -34,24 +38,26 @@ public class ExtensionLoader {
                     .toArray(URL[]::new));
             classLoaderMap.put(k, cl);
         });
-        if(!classLoaderMap.containsKey("default")){
-            classLoaderMap.put("default", new URLClassLoader(new URL[]{}));
+        if (!classLoaderMap.containsKey("default")) {
+            classLoaderMap.put("default", new URLClassLoader(new URL[] {}));
         }
     }
 
-    public void load(String className, HandlerRegisty hr) throws ClassNotFoundException, InvalidExtensionException {
+    public void load(String className, HandlerRegisty hr)
+            throws ClassNotFoundException, InvalidExtensionException, InvalidNamespaceException {
         String namespace = "default";
-        if (className.contains("_")) {
-            var split = className.split("_");
-            namespace = split[0];
-            className = split[1];
+        int split = className.lastIndexOf("_");
+        if (split != -1) {
+            namespace = className.substring(0, split);
+            className = className.substring(split + 1, className.length());
         }
+        LOGGER.info("Loading extension '{}' from namespace '{}'", namespace, className);
         var ns = namespace;
         Class<?> clazz = Optional.ofNullable(classLoaderMap.getOrDefault(ns, null))
-                .orElseThrow(() -> new ClassNotPreparedException("namespace: " + ns + " is invalid"))
+                .orElseThrow(() -> new InvalidNamespaceException("namespace: " + ns + " is invalid"))
                 .loadClass(className);
         if (!DillyDallyExtension.class.isAssignableFrom(clazz)) {
-            throw new ClassNotFoundException(clazz.getCanonicalName() + " is not an Extension");
+            throw new InvalidExtensionException(clazz.getCanonicalName() + " is not an Extension");
         }
         try {
             DillyDallyExtension dde = (DillyDallyExtension) clazz.getConstructor().newInstance();
@@ -61,10 +67,31 @@ public class ExtensionLoader {
             throw new InvalidExtensionException(
                     "Extension " + clazz.getCanonicalName() + " does not have a public zero-parameter constructor",
                     e);
-        } catch (ClassCastException cce){
+        } catch (ClassCastException cce) {
             throw new InvalidExtensionException(
                     "Extension " + clazz.getCanonicalName() + " is not an Extension.",
                     cce);
         }
+        LOGGER.info("Loaded extension '{}' from namespace '{}'", namespace, className);
+    }
+
+    @Override
+    public void close() throws Exception {
+        IOException ie = null;
+        for (var entry : classLoaderMap.entrySet()) {
+            var loader = entry.getValue();
+            try {
+                loader.close();
+            } catch (IOException e) {
+                e = new IOException("Error when trying to free namespace "
+                        + entry.getKey() + ": ", e);
+                if (ie == null)
+                    ie = e;
+                else
+                    ie.addSuppressed(e);
+            }
+        }
+        if (ie != null)
+            throw ie;
     }
 }
