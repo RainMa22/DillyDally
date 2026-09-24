@@ -271,7 +271,7 @@ Once the configuration is complete, you should be able to see your handler at wo
   "serverUrl": "self-sign",
   "domains": ["localhost", "127.0.0.1"],
   "extensionNamespaces": {"default": []},
-  "enabledExtensions": [""],
+  "enabledExtensions": [],
   "layoutScheme": {
     "/": {
       "FileHandler": {
