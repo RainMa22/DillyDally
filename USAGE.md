@@ -308,4 +308,4 @@ Once the configuration is complete, you should be able to see your handler at wo
 - Each path key in `layoutScheme` maps to **exactly one** handler (the JSON enforces a single-key object).
 - The `layoutScheme` default serves the current working directory at `/` via `FileHandler`.
 - All handlers run on a virtual-thread-per-task executor (`Executors.newVirtualThreadPerTaskExecutor()`).
-- built-in handler are referenced by their keyword("handler name") and not their canonical names.
+- built-in handlers are referenced by their keyword("handler name") and not their canonical names.
