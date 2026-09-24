@@ -32,6 +32,7 @@ import me.rainma22.dillydally.sslcert.io.CertificateGetterSaver;
 
 public class DillyDally {
     private static final Logger LOGGER = LogManager.getLogger();
+    private static final int BACKLOG = 8192;
     private ConfBean conf;
     private CertificateGetterLoader certGetterLoader;
 
@@ -70,7 +71,7 @@ public class DillyDally {
 
     public HttpServer createHttp() throws IOException {
         LOGGER.info("Creating Http Server");
-        HttpServer server = HttpServer.create(new InetSocketAddress(conf.getHttpPort()), 0);
+        HttpServer server = HttpServer.create(new InetSocketAddress(conf.getHttpPort()), BACKLOG);
         server.setExecutor(Executors.newVirtualThreadPerTaskExecutor());
         LOGGER.info("Http Server Created");
         return server;
@@ -89,7 +90,7 @@ public class DillyDally {
         TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
         tmf.init(keyStore);
 
-        HttpsServer server = HttpsServer.create(new InetSocketAddress(conf.getHttpsPort()), 0);
+        HttpsServer server = HttpsServer.create(new InetSocketAddress(conf.getHttpsPort()), BACKLOG);
         ctx.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
         server.setHttpsConfigurator(new HttpsConfigurator(ctx) {
             public void configure(HttpsParameters params) {
