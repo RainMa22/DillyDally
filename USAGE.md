@@ -186,7 +186,78 @@ Issues a `307 Temporary Redirect` that changes the URL scheme (e.g., HTTP → HT
 
 ## Registering Custom Handlers
 
-> To be implemented
+Registering a Custom Handler involves creating a project that imports the current `DillyDally.jar` as a provided library using either IntelliJ (Easier)
+
+or with Gradle Configuration:
+```groovy
+dependencies {
+  // ...
+  compileonly <path_to_DillyDally_jar>
+  // ...
+}
+```
+
+or with Maven Configuration:
+
+```xml
+<!-- ... -->
+<dependency>
+    <groupId>me.rainma22</groupId>
+    <artifactId>dillydally</artifactId>
+    <version>1.0</version>
+    <scope>provided</scope>
+    <systemPath>{path_to_DillyDally_jar}</systemPath>
+</dependency>
+<!-- ... -->
+```
+
+You will need to implement `me.rainma22.abstracts.DillyDallyExtension` which puts your handler logic into the `HandlerRegistry`
+```Java
+// ...
+import me.rainma22.abstracts.DillyDallyExtension;
+public class myExtension implements DillyDallyExtension{
+  public void onLoad(HandlerRegistry hr){
+    hr.register(MyHandler.class, (kwargs) -> {
+      // STUB: kwargs handing logic here;
+      return new MyHandler(...);
+    } );
+
+    // replace my Handler.class and relevant constructor logic
+  }
+}
+```
+You will need to package your extension into a Jar file
+
+> (For Beginner: We recommend packing your extensions in a fat Jar such that you won't need to worry about the dependencies jars in the next step). 
+
+Then, in `config/config.json`
+```json
+{
+  // ...
+  "extensionNameSpaces": {
+    "{namespace}": [
+      {path_to_your_jarfile},
+      {additional_dependencies}
+    ]},
+  // ...
+  "enabledExtensions": ["{namespace}_{canonical_name_of_your_extension}"],
+  // ...
+  "layoutScheme": {
+    "/": {
+      "{canonical_name_of_your_handler}": {
+        // kwargs of your handler
+      }
+    }
+  }
+  // ...
+}
+```
+
+Once the configuration is complete, you should be able to see your handler at work for `/*`.
+
+> Namespaces can be any string of your choice a different URLClassLoader are given for different namespaces, if you have extensions with conflicting dependencies, use a different namespace.
+> - if the extension entered into `enabledExtensions` does not have a `{namespace}_` prefix, the `default` namespace will be used. 
+
 
 ---
 
