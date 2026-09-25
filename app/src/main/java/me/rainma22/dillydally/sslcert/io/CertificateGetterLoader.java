@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
+import java.security.Security;
 import java.security.cert.CertificateException;
 
 import org.apache.logging.log4j.LogManager;
@@ -21,6 +22,10 @@ import me.rainma22.dillydally.sslcert.certificategetter.CertificateGetter;
 public class CertificateGetterLoader {
     private ConfBean conf;
     private static final Logger LOGGER = LogManager.getLogger();
+    static {
+        Security.addProvider(new BouncyCastleProvider());
+    }
+
     public CertificateGetterLoader(ConfBean conf) {
         this.conf = conf;
     }
@@ -47,7 +52,7 @@ public class CertificateGetterLoader {
             LOGGER.warn(e);
             cGetter = new CertificateGetter(conf);
         }
-        
+
         try {
             LOGGER.info("Loading SSL key and certificate");
             var sslLoader = new SSLLoader(conf);
