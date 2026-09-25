@@ -6,7 +6,7 @@ import me.rainma22.dillydally.abstracts.Bean;
 
 public class SSLCertificateConfBean extends Bean {
     private static final RandomStringUtils random = RandomStringUtils.secureStrong();
-    private String type = "file";
+    private String type = "handler";
     private String pathToWebRootDir = "res/static";
     private int nPollingRetries = 10;
     private String pathToACMEPEM = "config/acme.pem";

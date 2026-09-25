@@ -13,6 +13,14 @@ public class AuthorizationValidationState implements CertificateGetterState {
                     ctx.getCompletedChallenges().stream().toArray(CompletableFuture<?>[]::new))
                     .join();
             ctx.getCompletedChallenges().clear();
+            ctx.getCleanups().forEach(arg0 -> {
+                try {
+                    arg0.close();
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            });
+            ctx.getCleanups().clear();
         } catch (Exception e) {
             ctx.updateError(e);
         }

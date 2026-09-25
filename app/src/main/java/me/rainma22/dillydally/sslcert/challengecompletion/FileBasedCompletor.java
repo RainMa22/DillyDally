@@ -9,9 +9,11 @@ import io.jsonwebtoken.security.Jwks;
 import me.rainma22.dillydally.conf.SSLCertificateConfBean;
 import me.rainma22.dillydally.sslcert.OrderChallenge;
 
-class FileBasedCompletor implements ChallengeCompletor{
+@Deprecated
+class FileBasedCompletor implements ChallengeCompletor {
     private SSLCertificateConfBean httpConf;
 
+    @Deprecated
     public FileBasedCompletor(SSLCertificateConfBean httpChallengeConfBean) throws UnsupportedOperationException {
         httpConf = httpChallengeConfBean;
         if (!httpChallengeConfBean.getType().equalsIgnoreCase("file")) {
@@ -21,7 +23,8 @@ class FileBasedCompletor implements ChallengeCompletor{
         }
     }
 
-    public void completeChallenge(OrderChallenge challenge, KeyPair kp) throws IOException {
+    @Deprecated
+    public AutoCloseable completeChallenge(OrderChallenge challenge, KeyPair kp) throws IOException {
         var challengeFolderPath = Path.of(httpConf.getPathToWebRootDir(), ".well-known",
                 "acme-challenge");
         Files.createDirectories(challengeFolderPath);
@@ -31,5 +34,8 @@ class FileBasedCompletor implements ChallengeCompletor{
                 .replaceAll("=", "");
         Files.createFile(challengeFilePath);
         Files.writeString(challengeFilePath, challenge.getToken() + "." + thumbprint);
+        return () -> {
+            Files.deleteIfExists(challengeFilePath);
+        };
     }
 }

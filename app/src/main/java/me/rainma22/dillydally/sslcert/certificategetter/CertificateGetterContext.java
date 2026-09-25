@@ -33,6 +33,7 @@ public class CertificateGetterContext {
 
     private Deque<String> authorizationToDo = null;
     private final List<CompletableFuture<?>> completedChallenges = new ArrayList<>();
+    private final List<AutoCloseable> cleanups = new ArrayList<>(1);
 
     private int numRetries = 0;
     private Exception error = new IOException("Not completed yet.");
@@ -165,6 +166,10 @@ public class CertificateGetterContext {
 
     public List<CompletableFuture<?>> getCompletedChallenges() {
         return completedChallenges;
+    }
+
+    public List<AutoCloseable> getCleanups() {
+        return cleanups;
     }
 
     public Exception getError() {

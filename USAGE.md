@@ -50,8 +50,8 @@ DillyDally is a lightweight HTTP/HTTPS server with a pluggable handler system. Y
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `type` | `string` | `"file"` | `"file"` denotes a filed-based certification management strategy |
-| `pathToWebRootDir` | `string` | `"res/static"` | if `type` is `file`, Web root for ACME HTTP-01 challenges. |
+| `type` | `string` | `"handler"` | `"handler"` denotes a handler based HTTP-01 challenge completion strategy <br> (deprecated) `"file"` denotes a filed-based HTTP-01 challenge completion strategy|
+| `pathToWebRootDir` | `string` | `"res/static"` | (deprecated) if `type` is `file`, Web root for ACME HTTP-01 challenges(to write `.well-known/acme-challenges`). |
 | `pathToACMEPEM` | `string` | `"config/acme.pem"` | Path to save/load ACME account key PEM |
 | `pathToSSLKeyPEM` | `string` | `"config/key.pem"` | Path to save/load TLS private key PEM |
 | `pathToSSLCertPEM` | `string` | `"config/cert.pem"` | Path to save/load TLS certificate PEM |

@@ -7,6 +7,6 @@ import me.rainma22.dillydally.sslcert.OrderChallenge;
 
 public interface ChallengeCompletor {
 
-    void completeChallenge(OrderChallenge challenge, KeyPair kp) throws IOException;
+    AutoCloseable completeChallenge(OrderChallenge challenge, KeyPair kp) throws IOException;
 
 }
