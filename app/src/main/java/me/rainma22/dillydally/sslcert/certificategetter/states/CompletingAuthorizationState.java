@@ -2,6 +2,9 @@ package me.rainma22.dillydally.sslcert.certificategetter.states;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpClient.Redirect;
+import java.net.http.HttpRequest;
 import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
@@ -19,6 +22,7 @@ import me.rainma22.dillydally.sslcert.OrderChallenge;
 import me.rainma22.dillydally.sslcert.ResponseConstants;
 import me.rainma22.dillydally.sslcert.certificategetter.CertificateGetterContext;
 import me.rainma22.dillydally.sslcert.challengecompletion.ChallengeCompletor;
+import me.rainma22.dillydally.sslcert.challengecompletion.ChallengeCompletors;
 
 public class CompletingAuthorizationState implements CertificateGetterState {
 
@@ -92,11 +96,11 @@ public class CompletingAuthorizationState implements CertificateGetterState {
                     .findAny()
                     .orElseThrow(() -> new UnsupportedOperationException("only http-01 challenges supported for now"));
             if (ResponseConstants.PENDING.equals(http01Challenge.getStatus())) {
-                ChallengeCompletor completor = new ChallengeCompletor(conf.getSslCertificateConf());
-                completor.completeChallenge(http01Challenge, kp);
-                if (!completor.isUriAccessible(URI.create(http01Challenge.getUrl()))) {
+                ChallengeCompletor completor = ChallengeCompletors.fromConf(conf);
+                ctx.getCleanups().add(completor.completeChallenge(http01Challenge, kp));
+                if (!isUriAccessible(URI.create(http01Challenge.getUrl()))) {
                     throw new IOException(
-                            "Could not accessible acme-challenge uri, please properly configure the configuration json.");
+                            "Could not access acme-challenge uri, please properly configure the configuration json.");
                 }
             }
             ctx.getCompletedChallenges().add(
@@ -105,5 +109,23 @@ public class CompletingAuthorizationState implements CertificateGetterState {
         } catch (Exception e) {
             ctx.updateError(e);
         }
+    }
+
+    private boolean isUriAccessible(URI uri) {
+        try {
+            var client = HttpClient.newBuilder()
+                    .followRedirects(Redirect.ALWAYS)
+                    .build();
+            var req = HttpRequest.newBuilder(uri)
+                    .GET()
+                    .build();
+            return client.send(req, BodyHandlers.ofString())
+                    .statusCode() == 200;
+        } catch (IOException e) {
+            // ignored
+        } catch (InterruptedException e) {
+            // ignored
+        }
+        return false;
     }
 }

@@ -8,6 +8,7 @@ import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.HttpsServer;
 import me.rainma22.dillydally.conf.ConfBean;
 import me.rainma22.dillydally.handler.FileHandler;
+import me.rainma22.dillydally.sslcert.challengecompletion.ChallengeCompletors;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -59,13 +60,18 @@ public class Server {
             HttpServer http = dd.createHttp();
             var handlerLayout = config.getHandlerLayout();
             if (config.isDoHttps()) {
+                ChallengeCompletors.setHttpServer(http);
+                // TODO: pending removal after removal of File-based HTTP-01 completor
                 HttpHandler handler = new FileHandler(Path.of(config.getSslCertificateConf().getPathToWebRootDir()));
                 http.createContext("/", handler);
                 http.start();
-                HttpsServer https = dd.createHttps();
-                http.stop(0);
+                // END TODO: pending removal after removal of File-based HTTP-01 completor
 
+                HttpsServer https = dd.createHttps();
+                // TODO: pending removal after removal of File-based HTTP-01 completor
+                http.stop(0);
                 http = dd.createHttp();
+                // END TODO: pending removal after removal of File-based HTTP-01 completor
                 for (var e : handlerLayout.entrySet()) {
                     var k = e.getKey();
                     var v = e.getValue();

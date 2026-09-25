@@ -53,12 +53,11 @@ public class DillyDally {
             var kp = finalState.getLeft();
             var certs = finalState.getRight();
             ks.setKeyEntry("entry", kp.getPrivate(), new char[0], certs);
-            ForkJoinPool.commonPool().submit(() -> {
+            Thread.ofVirtual().start(() -> {
                 try {
                     new CertificateGetterSaver(conf).SaveToFile(certGetter);
                 } catch (IOException e) {
-                    LOGGER.warn("failed to save gotten certificate");
-                    LOGGER.warn(e);
+                    LOGGER.warn("failed to save gotten certificate", e);
                 }
             });
             LOGGER.info("finished loading keyStore");
