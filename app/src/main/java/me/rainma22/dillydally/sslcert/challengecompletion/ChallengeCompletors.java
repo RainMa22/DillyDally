@@ -9,6 +9,8 @@ import me.rainma22.dillydally.sslcert.OrderChallenge;
 import java.io.IOException;
 import java.security.KeyPair;
 
+import org.apache.logging.log4j.LogManager;
+
 import com.sun.net.httpserver.HttpServer;
 
 import io.jsonwebtoken.security.Jwks;
@@ -68,9 +70,11 @@ class HandlerBasedCompletor implements ChallengeCompletor {
                 .replaceAll("=", "");
         var content = challenge.getToken() + "." + thumbprint;
         byte[] data = content.getBytes();
+        // LogManager.getLogger().error(challengeFolderPath.toString());
         var ctx = server.createContext(challengeFolderPath, (req) -> {
-            req.getResponseBody().write(data);
             req.sendResponseHeaders(200, data.length);
+            req.getResponseBody().write(data);
+            req.close();
         });
         return new AutoCloseable() {
             private boolean closed = false;

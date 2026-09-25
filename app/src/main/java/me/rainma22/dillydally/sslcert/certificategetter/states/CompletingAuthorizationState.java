@@ -97,7 +97,7 @@ public class CompletingAuthorizationState implements CertificateGetterState {
                     .orElseThrow(() -> new UnsupportedOperationException("only http-01 challenges supported for now"));
             if (ResponseConstants.PENDING.equals(http01Challenge.getStatus())) {
                 ChallengeCompletor completor = ChallengeCompletors.fromConf(conf);
-                completor.completeChallenge(http01Challenge, kp);
+                ctx.getCleanups().add(completor.completeChallenge(http01Challenge, kp));
                 if (!isUriAccessible(URI.create(http01Challenge.getUrl()))) {
                     throw new IOException(
                             "Could not access acme-challenge uri, please properly configure the configuration json.");
